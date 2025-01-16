@@ -15,7 +15,7 @@ class Person(OurBaseModel):
     id: int
     firstname: str
     lastname: str
-    isMale: bool
+    is_male: bool
 
 # Create a database session instance
 db = SessionLocal()
@@ -42,7 +42,7 @@ def add_person(person: Person):
             id=person.id,
             firstname=person.firstname,
             lastname=person.lastname,
-            isMale=person.isMale
+            is_male=person.is_male
         )
         find_person=db.query(models.Person).filter(models.Person.id==person.id).first()
         if find_person is not None:
@@ -65,7 +65,7 @@ def updatePerson(person_id:int,person:Person):
         find_person.firstname=person.firstname
         find_person.lastname=person.lastname
         find_person.lastname=person.lastname
-        find_person.isMale=person.isMale
+        find_person.is_male=person.is_male
         db.commit()
         return find_person
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Person with this id not found")

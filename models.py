@@ -8,6 +8,6 @@ class Person(Base):
     id=Column(Integer,primary_key=True)
     firstname=Column(String(40),nullable=False)
     lastname=Column(String(40),nullable=False)
-    isMale=Column(Boolean)
+    is_male=Column(Boolean)
 
     
