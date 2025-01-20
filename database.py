@@ -11,3 +11,10 @@ engine=create_engine("postgresql://postgres:Jasmine@localhost/Person",echo=True)
 
 Base=declarative_base()
 SessionLocal=sessionmaker(engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
