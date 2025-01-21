@@ -1,29 +1,12 @@
-
-
-from fastapi import FastAPI, status, HTTPException
-from pydantic import BaseModel
-from database import SessionLocal
-import models
 from typing import Optional
-
-app = FastAPI()
-class PersonCreate(BaseModel):
-    firstname: str
-    lastname: str
-    is_male: bool
-class OurBaseModel(BaseModel):
-    class Config:
-        orm_mode = True  # Enables conversion of ORM models to Pydantic models
-
-class Person(OurBaseModel):
-    id: int
-    firstname: str
-    lastname: str
-    is_male: bool
-
-# Create a database session instance
+from fastapi import APIRouter
+from fastapi import HTTPException, status
+import models
+from database import SessionLocal
+from src.persons.schemas import Person, PersonCreate
+person_router=APIRouter()
 db = SessionLocal()
-@app.get("/persons/")
+@person_router.get("/", response_model=list[Person], status_code=status.HTTP_200_OK)
 async def get_persons(
     firstname: Optional[str] = None,
     lastname: Optional[str] = None,
@@ -37,7 +20,7 @@ async def get_persons(
         # Start with a base query
         query = db.query(models.Person)
         
-        # Apply filters based on optional parameters
+        # person_routerly filters based on optional parameters
         if firstname:
             query = query.filter(models.Person.firstname.ilike(f"%{firstname}%"))
         if lastname:
@@ -68,14 +51,14 @@ async def get_persons(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@app.get('/', response_model=list[Person], status_code=status.HTTP_200_OK)
+@person_router.get('/', response_model=list[Person], status_code=status.HTTP_200_OK)
 def get_all_persons():
     try:
         persons = db.query(models.Person).all()
         return persons
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@app.get('/{person_id}', response_model=Person, status_code=status.HTTP_200_OK)
+@person_router.get('/{person_id}', response_model=Person, status_code=status.HTTP_200_OK)
 def get_single_person(person_id:int):
     try:
         get_single_person = db.query(models.Person).filter(models.Person.id==person_id).first()
@@ -83,7 +66,7 @@ def get_single_person(person_id:int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post('/', response_model=Person, status_code=status.HTTP_201_CREATED)
+@person_router.post('/', response_model=Person, status_code=status.HTTP_201_CREATED)
 def add_person(person: PersonCreate):
     try:
         new_person = models.Person(
@@ -99,7 +82,7 @@ def add_person(person: PersonCreate):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.put('/update_person/{person_id}',response_model=Person,status_code=status.HTTP_202_ACCEPTED)
+@person_router.put('/{person_id}',response_model=Person,status_code=status.HTTP_202_ACCEPTED)
 def updatePerson(person_id:int,person:Person):
     find_person=db.query(models.Person).filter(models.Person.id==person_id).first()
     if find_person is not None:
@@ -112,7 +95,7 @@ def updatePerson(person_id:int,person:Person):
         return find_person
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Person with this id not found")
 
-@app.delete("/delete_person/{person_id}",response_model=Person,status_code=200)
+@person_router.delete("/{person_id}",response_model=Person,status_code=200)
 def deletePerson(person_id:int):
     find_person=db.query(models.Person).filter(models.Person.id==person_id).first()
     if find_person is not None:
