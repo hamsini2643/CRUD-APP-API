@@ -27,7 +27,11 @@ db = SessionLocal()
 async def get_persons(
     firstname: Optional[str] = None,
     lastname: Optional[str] = None,
-    is_male: Optional[bool] = None
+    is_male: Optional[bool] = None,
+    sort: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    min_id: Optional[int] = None,
+    max_id: Optional[int] = None
 ):
     try:
         # Start with a base query
@@ -40,6 +44,23 @@ async def get_persons(
             query = query.filter(models.Person.lastname.ilike(f"%{lastname}%"))
         if is_male is not None:
             query = query.filter(models.Person.is_male == is_male)
+        '''if sort == "asc":
+            query = query.order_by(models.Person.firstname.asc())
+        elif sort == "desc":
+            query = query.order_by(models.Person.firstname.desc())'''
+        if sort and sort_by:
+            sort_column = getattr(models.Person, sort_by, None)
+            if not sort_column:
+                raise HTTPException(status_code=400, detail="Invalid sort_by field")
+            
+            if sort == "asc":
+                query = query.order_by(sort_column.asc())
+            elif sort == "desc":
+                query = query.order_by(sort_column.desc())
+        if min_id is not None:
+            query = query.filter(models.Person.id >= min_id)
+        if max_id is not None:
+            query = query.filter(models.Person.id <= max_id)
         
         # Execute the query
         result = query.all()
