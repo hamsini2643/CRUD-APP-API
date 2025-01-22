@@ -6,7 +6,7 @@ from sqlmodel import SQLModel
 from pathlib import Path 
 from alembic import context
 
-from models import Person 
+from app.models import Person 
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
