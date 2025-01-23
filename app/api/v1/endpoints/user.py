@@ -166,3 +166,4 @@ async def update_person(
     db.refresh(person)  # Refresh the instance to reflect the changes
 
     return {"status": "success", "data": person}
+

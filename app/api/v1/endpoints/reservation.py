@@ -68,7 +68,7 @@ def get_single_slot(slot_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/slots/", response_model=Slot)
+@app.post("/", response_model=Slot)
 def add_slot(slot: SlotCreate, db: Session = Depends(get_db)):
     try:
         new_slot = models.Slots(
@@ -89,7 +89,7 @@ def add_slot(slot: SlotCreate, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.put("/slots/{slot_id}", response_model=Slot)
+@app.put("/{slot_id}", response_model=Slot)
 def update_slot(slot_id: int, slot: SlotCreate, db: Session = Depends(get_db)):
     existing_slot = db.query(models.Slots).filter(models.Slots.id == slot_id).first()
     if existing_slot:
@@ -100,7 +100,7 @@ def update_slot(slot_id: int, slot: SlotCreate, db: Session = Depends(get_db)):
         return existing_slot
     raise HTTPException(status_code=404, detail="Slot not found")
 
-@app.delete("/slots/{slot_id}", response_model=Slot)
+@app.delete("/{slot_id}", response_model=Slot)
 def delete_slot(slot_id: int, db: Session = Depends(get_db)):
     slot = db.query(models.Slots).filter(models.Slots.id == slot_id).first()
     if slot:
@@ -108,3 +108,50 @@ def delete_slot(slot_id: int, db: Session = Depends(get_db)):
         db.commit()
         raise HTTPException(status_code=200, detail="Slot deleted successfully")
     raise HTTPException(status_code=404, detail="Slot not found")
+
+@app.get("/user/{person_id}/reservations", response_model=list[Slot], status_code=status.HTTP_200_OK)
+async def get_reservations_by_user_id(
+    person_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Fetch all reservations for a specific user by their person_id.
+    """
+    try:
+        reservations = db.query(models.Slots).filter(models.Slots.person_id == person_id).all()
+
+        if not reservations:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No reservations found for user with ID {person_id}"
+            )
+
+        return reservations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/user/{person_id}/reservations/{slot_id}", response_model=Slot, status_code=status.HTTP_200_OK)
+async def get_single_reservation_for_user(
+    person_id: int,
+    slot_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Fetch a single reservation for a specific user by person_id and slot_id.
+    """
+    try:
+        reservation = (
+            db.query(models.Slots)
+            .filter(models.Slots.person_id == person_id, models.Slots.id == slot_id)
+            .first()
+        )
+
+        if not reservation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Reservation with ID {slot_id} not found for user with ID {person_id}"
+            )
+
+        return reservation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
