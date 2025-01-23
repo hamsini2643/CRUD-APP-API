@@ -77,7 +77,7 @@ async def get_persons(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/{person_id}", response_model=Person, status_code=status.HTTP_200_OK)
+@app.get("/{id}", response_model=Person, status_code=status.HTTP_200_OK)
 def get_single_person(person_id: int, db: Session = Depends(get_db)):  # Use dependency injection
     try:
         get_single_person = db.query(models.Person).filter(models.Person.id == person_id).first()
@@ -105,7 +105,7 @@ def add_person(person: PersonCreate, db: Session = Depends(get_db)):  # Use depe
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.put("/{person_id}", response_model=Person, status_code=status.HTTP_202_ACCEPTED)
+@app.put("/{id}", response_model=Person, status_code=status.HTTP_202_ACCEPTED)
 def updatePerson(person_id: int, person: Person, db: Session = Depends(get_db)):  # Use dependency injection
     find_person = db.query(models.Person).filter(models.Person.id == person_id).first()
     if find_person is not None:
@@ -119,7 +119,7 @@ def updatePerson(person_id: int, person: Person, db: Session = Depends(get_db)):
     )
 
 
-@app.delete("/{person_id}", response_model=Person, status_code=status.HTTP_200_OK)
+@app.delete("/{id}", response_model=Person, status_code=status.HTTP_200_OK)
 def deletePerson(person_id: int, db: Session = Depends(get_db)):  # Use dependency injection
     find_person = db.query(models.Person).filter(models.Person.id == person_id).first()
     if find_person is not None:
@@ -140,7 +140,7 @@ class UpdatePersonRequest(BaseModel):
     is_male: Optional[bool] = None
 
 
-@app.patch("/{person_id}")
+@app.patch("/{id}")
 async def update_person(
     person_id: int,
     person_data: UpdatePersonRequest,
@@ -166,4 +166,3 @@ async def update_person(
     db.refresh(person)  # Refresh the instance to reflect the changes
 
     return {"status": "success", "data": person}
-
