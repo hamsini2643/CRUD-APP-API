@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, Column, Boolean, ForeignKey, TIMESTAMP
+from sqlalchemy import String, Integer, Column, Boolean, ForeignKey, TIME
 
 from database import Base,engine
 def create_tables():
@@ -12,6 +12,6 @@ class Person(Base):
 class Slots(Base):
     __tablename__='slots'
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    start_time = Column(TIMESTAMP, nullable=False)
-    end_time = Column(TIMESTAMP, nullable=False)
-    person_id = Column(Integer, ForeignKey("person.id", on_delete="CASCADE"), nullable=False)  # Foreign key reference to 'person' table    
+    start_time = Column(String(10), nullable=False)
+    end_time = Column(String(10), nullable=False)
+    person_id = Column(Integer, ForeignKey("person.id", ondelete="CASCADE"), nullable=False)  # Foreign key reference to 'person' table    
