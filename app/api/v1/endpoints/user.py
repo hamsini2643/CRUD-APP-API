@@ -25,7 +25,7 @@ class Person(OurBaseModel):
 
 # Create a database session instance
 db = SessionLocal()
-@app.get("/persons/")
+@app.get("/", response_model=list[Person], status_code=status.HTTP_200_OK)
 async def get_persons(
     firstname: Optional[str] = None,
     lastname: Optional[str] = None,
@@ -33,11 +33,15 @@ async def get_persons(
     sort: Optional[str] = None,
     sort_by: Optional[str] = None,
     min_id: Optional[int] = None,
-    max_id: Optional[int] = None
+    max_id: Optional[int] = None,
+    get_all: Optional[bool] = False,
 ):
     try:
         # Start with a base query
         query = db.query(models.Person)
+        if get_all:
+            result = query.all()
+            return result
         
         # Apply filters based on optional parameters
         if firstname:
@@ -70,13 +74,13 @@ async def get_persons(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@app.get('/', response_model=list[Person], status_code=status.HTTP_200_OK)
+'''@app.get('/', response_model=list[Person], status_code=status.HTTP_200_OK)
 def get_all_persons():
     try:
         persons = db.query(models.Person).all()
         return persons
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))'''
 @app.get('/{person_id}', response_model=Person, status_code=status.HTTP_200_OK)
 def get_single_person(person_id:int):
     try:
@@ -101,7 +105,7 @@ def add_person(person: PersonCreate):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.put('/update_person/{person_id}',response_model=Person,status_code=status.HTTP_202_ACCEPTED)
+@app.put('/{person_id}',response_model=Person,status_code=status.HTTP_202_ACCEPTED)
 def updatePerson(person_id:int,person:Person):
     find_person=db.query(models.Person).filter(models.Person.id==person_id).first()
     if find_person is not None:
@@ -114,7 +118,7 @@ def updatePerson(person_id:int,person:Person):
         return find_person
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Person with this id not found")
 
-@app.delete("/delete_person/{person_id}",response_model=Person,status_code=200)
+@app.delete("/{person_id}",response_model=Person,status_code=200)
 def deletePerson(person_id:int):
     find_person=db.query(models.Person).filter(models.Person.id==person_id).first()
     if find_person is not None:
