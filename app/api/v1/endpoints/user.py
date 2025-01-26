@@ -88,7 +88,7 @@ def get_single_person(person_id: int, db: Session = Depends(get_db)):  # Use dep
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/", response_model=Person, status_code=status.HTTP_201_CREATED)
+'''@app.post("/", response_model=Person, status_code=status.HTTP_201_CREATED)
 def add_person(person: PersonCreate, db: Session = Depends(get_db)):  # Use dependency injection
     try:
         new_person = models.Person(
@@ -102,7 +102,7 @@ def add_person(person: PersonCreate, db: Session = Depends(get_db)):  # Use depe
         return new_person
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))'''
 
 
 @app.put("/{id}", response_model=Person, status_code=status.HTTP_202_ACCEPTED)
