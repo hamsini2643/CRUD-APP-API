@@ -1,13 +1,18 @@
-from fastapi import FastAPI, status, HTTPException, Depends 
+from fastapi import FastAPI, status, HTTPException, Depends
 from pydantic import BaseModel
 from database import get_db
 import app.models as models
-from typing import Optional
 from sqlalchemy.orm import Session
-from fastapi import APIRouter
+from app.api.v1.endpoints.auth.jwt_handler import decode_access_token
+from fastapi.security import OAuth2PasswordBearer
+from typing import Optional
 from datetime import datetime
+from fastapi import APIRouter
 
 app = APIRouter()
+
+# OAuth2 scheme to extract the token
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 class OurBaseModel(BaseModel):
     class Config:
@@ -25,6 +30,17 @@ class Slot(OurBaseModel):
     end_time: str
     person_id: int
 
+# Dependency to get the current logged-in user
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = decode_access_token(token)
+        username = payload.get("sub")
+        if not username:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return username
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
 @app.get("/", response_model=list[Slot], status_code=status.HTTP_200_OK)
 async def get_slots(
     start_time: Optional[str] = None,
@@ -33,6 +49,7 @@ async def get_slots(
     sort: Optional[str] = None,
     sort_by: Optional[str] = None,
     db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)  # Authentication required
 ):
     try:
         query = db.query(models.Slots)
@@ -58,18 +75,12 @@ async def get_slots(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/{slot_id}", response_model=Slot, status_code=status.HTTP_200_OK)
-def get_single_slot(slot_id: int, db: Session = Depends(get_db)):
-    try:
-        slot = db.query(models.Slots).filter(models.Slots.id == slot_id).first()
-        if not slot:
-            raise HTTPException(status_code=404, detail="Slot not found")
-        return slot
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/", response_model=Slot)
-def add_slot(slot: SlotCreate, db: Session = Depends(get_db)):
+@app.post("/", response_model=Slot, status_code=status.HTTP_201_CREATED)
+def add_slot(
+    slot: SlotCreate, 
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)  # Authentication required
+):
     try:
         new_slot = models.Slots(
             start_time=slot.start_time,
@@ -88,9 +99,14 @@ def add_slot(slot: SlotCreate, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-    
-@app.put("/{slot_id}", response_model=Slot)
-def update_slot(slot_id: int, slot: SlotCreate, db: Session = Depends(get_db)):
+
+@app.put("/{slot_id}", response_model=Slot, status_code=status.HTTP_202_ACCEPTED)
+def update_slot(
+    slot_id: int, 
+    slot: SlotCreate, 
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)  # Authentication required
+):
     existing_slot = db.query(models.Slots).filter(models.Slots.id == slot_id).first()
     if existing_slot:
         existing_slot.start_time = slot.start_time
@@ -100,58 +116,16 @@ def update_slot(slot_id: int, slot: SlotCreate, db: Session = Depends(get_db)):
         return existing_slot
     raise HTTPException(status_code=404, detail="Slot not found")
 
-@app.delete("/{slot_id}", response_model=Slot)
-def delete_slot(slot_id: int, db: Session = Depends(get_db)):
+@app.delete("/{slot_id}", status_code=status.HTTP_200_OK)
+def delete_slot(
+    slot_id: int, 
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)  # Authentication required
+):
     slot = db.query(models.Slots).filter(models.Slots.id == slot_id).first()
     if slot:
         db.delete(slot)
         db.commit()
-        raise HTTPException(status_code=200, detail="Slot deleted successfully")
+        return {"message": "Slot deleted successfully"}
     raise HTTPException(status_code=404, detail="Slot not found")
 
-@app.get("/user/{person_id}/reservations", response_model=list[Slot], status_code=status.HTTP_200_OK)
-async def get_reservations_by_user_id(
-    person_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Fetch all reservations for a specific user by their person_id.
-    """
-    try:
-        reservations = db.query(models.Slots).filter(models.Slots.person_id == person_id).all()
-
-        if not reservations:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No reservations found for user with ID {person_id}"
-            )
-
-        return reservations
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/user/{person_id}/reservations/{slot_id}", response_model=Slot, status_code=status.HTTP_200_OK)
-async def get_single_reservation_for_user(
-    person_id: int,
-    slot_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Fetch a single reservation for a specific user by person_id and slot_id.
-    """
-    try:
-        reservation = (
-            db.query(models.Slots)
-            .filter(models.Slots.person_id == person_id, models.Slots.id == slot_id)
-            .first()
-        )
-
-        if not reservation:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Reservation with ID {slot_id} not found for user with ID {person_id}"
-            )
-
-        return reservation
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

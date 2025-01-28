@@ -27,6 +27,16 @@ class Person(OurBaseModel):
     lastname: str
     is_male: bool
 
+class SlotCreate(BaseModel):
+    start_time: str  # Expecting a string
+    end_time: str    # Expecting a string
+    person_id: int
+
+class Slot(OurBaseModel):
+    id: int
+    start_time: str
+    end_time: str
+    person_id: int
 
 @app.get("/", response_model=list[Person], status_code=status.HTTP_200_OK)
 async def get_persons(
@@ -169,3 +179,53 @@ async def update_person(
     db.refresh(person)  # Refresh the instance to reflect the changes
 
     return {"status": "success", "data": person}
+
+
+@app.get("/{person_id}/reservations", response_model=list[Slot], status_code=status.HTTP_200_OK)
+async def get_reservations_by_user_id(
+    person_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Fetch all reservations for a specific user by their person_id.
+    """
+    try:
+        reservations = db.query(models.Slots).filter(models.Slots.person_id == person_id).all()
+
+        if not reservations:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No reservations found for user with ID {person_id}"
+            )
+
+        return reservations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/{person_id}/reservations/{slot_id}", response_model=Slot, status_code=status.HTTP_200_OK)
+async def get_single_reservation_for_user(
+    person_id: int,
+    slot_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Fetch a single reservation for a specific user by person_id and slot_id.
+    """
+    try:
+        reservation = (
+            db.query(models.Slots)
+            .filter(models.Slots.person_id == person_id, models.Slots.id == slot_id)
+            .first()
+        )
+
+        if not reservation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Reservation with ID {slot_id} not found for user with ID {person_id}"
+            )
+
+        return reservation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
