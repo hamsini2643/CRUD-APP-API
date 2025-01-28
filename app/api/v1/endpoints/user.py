@@ -91,8 +91,7 @@ async def get_persons(
 #print("this is id")
 def get_single_person(id: int, db: Session = Depends(get_db)):  # Use dependency injection
     try:
-        print("this is db------------>", get_db)
-        print("id---------------->",id)
+        
         get_single_person = db.query(models.Person).filter(models.Person.id == id).first()
         if not get_single_person:
             raise HTTPException(status_code=404, detail="Person not found")
