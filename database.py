@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 #load_dotenv()
 #engine=create_engine(os.getenv(DATABASE_CONNECTION_STRING),echo=True)
-host = "127.0.0.1"
+host = "localhost"
 user = "postgres"
 password = "Jasmine"
 db_name = "Person"

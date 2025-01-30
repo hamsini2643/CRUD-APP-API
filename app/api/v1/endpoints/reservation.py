@@ -75,17 +75,52 @@ async def get_slots(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+'''@app.post("/", response_model=Slot, status_code=status.HTTP_201_CREATED)
+def add_slot(
+    slot: SlotCreate, 
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)  # Authentication required
+    
+):
+    try:
+        user=db.query(models.Person).filter(models.Person.firstname==current_user).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if slot.person_id!=user.id:
+            raise HTTPException(status_code=403, detail="You are not authorized to add this slot")
+        new_slot = models.Slots(
+            start_time=slot.start_time,
+            end_time=slot.end_time,
+        )
+        db.add(new_slot)
+        db.commit()
+        db.refresh(new_slot)
+        return Slot(
+            id=new_slot.id,
+            start_time=new_slot.start_time,
+            end_time=new_slot.end_time,
+            person_id=user.id,
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))'''
 @app.post("/", response_model=Slot, status_code=status.HTTP_201_CREATED)
 def add_slot(
     slot: SlotCreate, 
     db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)  # Authentication required
+    
 ):
     try:
+        user=db.query(models.Person).filter(models.Person.firstname==current_user).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if slot.person_id!=user.id:
+            raise HTTPException(status_code=403, detail="You are not authorized to add this slot")
         new_slot = models.Slots(
             start_time=slot.start_time,
             end_time=slot.end_time,
-            person_id=slot.person_id,
+            person_id=user.id
         )
         db.add(new_slot)
         db.commit()

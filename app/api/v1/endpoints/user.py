@@ -4,7 +4,7 @@ from database import get_db
 import app.models as models
 from typing import Optional
 from sqlalchemy.orm import Session
-
+from app.api.v1.endpoints.auth.hashing import hash_password, verify_password
 from fastapi import APIRouter
 
 app = APIRouter()
@@ -14,6 +14,7 @@ class PersonCreate(BaseModel):
     firstname: str
     lastname: str
     is_male: bool
+    password_hash: str
 
 
 class OurBaseModel(BaseModel):
@@ -26,6 +27,13 @@ class Person(OurBaseModel):
     firstname: str
     lastname: str
     is_male: bool
+    #password_hash: str
+class Person_put(OurBaseModel):
+    id: int
+    firstname: str
+    lastname: str
+    is_male: bool
+    password_hash: str
 
 class SlotCreate(BaseModel):
     start_time: str  # Expecting a string
@@ -100,13 +108,14 @@ def get_single_person(id: int, db: Session = Depends(get_db)):  # Use dependency
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/", response_model=Person, status_code=status.HTTP_201_CREATED)
+'''@app.post("/", response_model=Person, status_code=status.HTTP_201_CREATED)
 def add_person(person: PersonCreate, db: Session = Depends(get_db)):  # Use dependency injection
     try:
         new_person = models.Person(
             firstname=person.firstname,
             lastname=person.lastname,
             is_male=person.is_male,
+            
         )
         db.add(new_person)
         db.commit()
@@ -114,16 +123,20 @@ def add_person(person: PersonCreate, db: Session = Depends(get_db)):  # Use depe
         return new_person
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))'''
 
 
 @app.put("/{id}", response_model=Person, status_code=status.HTTP_202_ACCEPTED)
-def updatePerson(id: int, person: Person, db: Session = Depends(get_db)):  # Use dependency injection
+def updatePerson(id: int, person: Person_put, db: Session = Depends(get_db)):  # Use dependency injection
     find_person = db.query(models.Person).filter(models.Person.id == id).first()
     if find_person is not None:
         find_person.firstname = person.firstname
         find_person.lastname = person.lastname
         find_person.is_male = person.is_male
+        #find_person.password_hash = person.password_hash
+        if person.password_hash:
+            hashed_password = hash_password(person.password_hash)  # Hash the new password
+            find_person.password_hash = hashed_password
         db.commit()
         return find_person
     raise HTTPException(
