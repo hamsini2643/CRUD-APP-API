@@ -9,7 +9,6 @@ import pytest
 client = TestClient(app)
 
 
-# Create a fixture to provide a test database session
 @pytest.fixture
 def test_db():
     """Fixture to create and rollback a test database session"""
@@ -26,21 +25,21 @@ def test_register_user(test_db):
     response = client.post("/api/v1/auth/register", json={
         "firstname": "jam",
         "lastname": "r",
-        "password": password,  # Sent as plain text (API should hash it)
-        "is_male": True  # Correct boolean type
+        "password": password,  
+        "is_male": True  
     })
-    print("------------------------>>>",response.json())  # Debugging: See API error message
+    print("------------------------>>>",response.json())  
 
-    assert response.status_code == 201  # Ensure success
+    assert response.status_code == 201  
     assert response.json() == {"message": "User registered successfully"}
 
-    # Verify user is saved in DB with hashed password
+    
     user_in_db = test_db.query(Person).filter(Person.firstname == "jam").first()
     assert user_in_db is not None
-    assert verify_password(password, user_in_db.password_hash)  # Ensure hash matches
+    assert verify_password(password, user_in_db.password_hash)  
 
 
-#  Test User Login successfullly 
+
 def test_login_user(test_db):
     """Test login with correct password"""
 
@@ -65,7 +64,7 @@ def test_login_user(test_db):
     assert data["token_type"] == "bearer"
     assert data["user_id"] == test_user.id
 
-#test login with wrong password
+
 def test_login_user_wrong(test_db):
     """Test login with wrong password"""
 
