@@ -19,7 +19,7 @@ def test_db():
 
 # Test User Registration
 def test_register_user(test_db):
-    """Test registering a user with hashed password"""
+    """Test registering a user """
     test_db.query(Person).filter(Person.firstname == "jam").delete()
     test_db.commit()
     password = "jam123"  # Plain password
@@ -40,9 +40,9 @@ def test_register_user(test_db):
     assert verify_password(password, user_in_db.password_hash)  # Ensure hash matches
 
 
-#  Test User Login
+#  Test User Login successfullly 
 def test_login_user(test_db):
-    """Test login with hashed password"""
+    """Test login with correct password"""
 
     password = "jam123"
     hashed_password = hash_password(password)  # Hash password before saving
@@ -64,3 +64,39 @@ def test_login_user(test_db):
     assert "access_token" in data
     assert data["token_type"] == "bearer"
     assert data["user_id"] == test_user.id
+
+#test login with wrong password
+def test_login_user_wrong(test_db):
+    """Test login with wrong password"""
+
+    password = "randompassword"
+    hashed_password = hash_password(password)  # Hash password before saving
+
+    # Manually insert a test user in the database
+    test_user = test_db.query(Person).filter(Person.firstname == "jam").first()
+    assert test_user is not None
+    
+
+    # Attempt to login
+    response = client.post("/api/v1/auth/login", json={
+        "firstname": "jam",
+        "password": password  # Sending plain password
+    })
+    print("------------------------>>>",response.json())  # Debugging: See API error message
+
+    assert response.status_code == 401
+    data = response.json()
+    assert data=={'detail': 'Invalid credentials'}
+    #assert data["token_type"] == "bearer"
+    #assert data["user_id"] == test_user.id
+
+def test_login_nonexistent_user(client):
+    """Test login with a user that does not exist"""
+
+    response = client.post("/api/v1/auth/login", json={
+        "firstname": "ghost",
+        "password": "randompassword"
+    })
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid credentials"
