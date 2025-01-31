@@ -2,6 +2,7 @@ from fastapi import FastAPI, status, HTTPException, Depends
 from pydantic import BaseModel
 from database import get_db
 import app.models as models
+import schemas
 from sqlalchemy.orm import Session
 from app.api.v1.endpoints.auth.jwt_handler import decode_access_token
 from fastapi.security import OAuth2PasswordBearer
@@ -14,21 +15,7 @@ app = APIRouter()
 # OAuth2 scheme to extract the token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
-class OurBaseModel(BaseModel):
-    class Config:
-        from_attributes = True  # Enables conversion of ORM models to Pydantic models
-        strip_whitespace = True
 
-class SlotCreate(BaseModel):
-    start_time: str  # Expecting a string
-    end_time: str    # Expecting a string
-    person_id: int
-
-class Slot(OurBaseModel):
-    id: int
-    start_time: str
-    end_time: str
-    person_id: int
 
 # Dependency to get the current logged-in user
 def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -41,7 +28,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except Exception as e:
         raise HTTPException(status_code=401, detail="Authentication failed")
 
-@app.get("/", response_model=list[Slot], status_code=status.HTTP_200_OK)
+@app.get("/", response_model=list[schemas.Slot], status_code=status.HTTP_200_OK)
 async def get_slots(
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
@@ -104,9 +91,9 @@ def add_slot(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))'''
-@app.post("/", response_model=Slot, status_code=status.HTTP_201_CREATED)
+@app.post("/", response_model=schemas.Slot, status_code=status.HTTP_201_CREATED)
 def add_slot(
-    slot: SlotCreate, 
+    slot: schemas.SlotCreate, 
     db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)  # Authentication required
     
@@ -125,7 +112,7 @@ def add_slot(
         db.add(new_slot)
         db.commit()
         db.refresh(new_slot)
-        return Slot(
+        return schemas.Slot(
             id=new_slot.id,
             start_time=new_slot.start_time,
             end_time=new_slot.end_time,
@@ -135,10 +122,10 @@ def add_slot(
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.put("/{slot_id}", response_model=Slot, status_code=status.HTTP_202_ACCEPTED)
+@app.put("/{slot_id}", response_model=schemas.Slot, status_code=status.HTTP_202_ACCEPTED)
 def update_slot(
     slot_id: int, 
-    slot: SlotCreate, 
+    slot: schemas.SlotCreate, 
     db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)  # Authentication required
 ):

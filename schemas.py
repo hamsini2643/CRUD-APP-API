@@ -36,3 +36,4 @@ class Slot(OurBaseModel):
     start_time: str
     end_time: str
     person_id: int
+
