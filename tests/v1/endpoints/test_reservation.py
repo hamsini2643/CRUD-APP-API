@@ -7,3 +7,18 @@ from database import get_db
 from app.models import Person
 import pytest
 client = TestClient(app)
+
+@pytest.fixture
+def test_db():
+    """Fixture to create and rollback a test database session"""
+    db = next(get_db())  # Get a database session
+    yield db
+    db.rollback()  # Rollback changes after test to maintain clean state
+
+def test_get_by_slotid(test_db):
+    """Test getting a slot by slotid """
+    response = client.get("/api/v1/reservation/?get_all=true")
+    
+    print("------------------------>>>",response.json())  
+
+    assert response.status_code == 200
