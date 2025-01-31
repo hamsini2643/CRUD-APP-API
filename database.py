@@ -1,18 +1,22 @@
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-#from dotenv import load_dotenv
+from dotenv import load_dotenv
 import os
-
 from sqlalchemy.ext.declarative import declarative_base
 
-#load_dotenv()
-#engine=create_engine(os.getenv(DATABASE_CONNECTION_STRING),echo=True)
-host = "localhost"
-user = "postgres"
-password = "Jasmine"
-db_name = "Person"
-DATABASE_CONNECTION_STRING=f"postgresql://{user}:{password}@{host}/{db_name}"
-engine=create_engine(DATABASE_CONNECTION_STRING, echo=True)
+dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path)
+
+# Retrieve the connection string
+DATABASE_CONNECTION_STRING = os.getenv("DATABASE_CONNECTION_STRING")
+
+
+#data = os.getenv(DATABASE_CONNECTION_STRING)
+#print(data)
+
+engine = create_engine(DATABASE_CONNECTION_STRING, echo=True)
+
+#engine=create_engine(DATABASE_CONNECTION_STRING, echo=True)
 
 Base=declarative_base()
 SessionLocal=sessionmaker(engine)

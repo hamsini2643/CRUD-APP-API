@@ -1,9 +1,14 @@
 import jwt
 from datetime import datetime, timedelta
 from fastapi import HTTPException
+from dotenv import load_dotenv
+import os
+dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path)
+SECRET_KEY = os.getenv("SECRET_KEY")
+#SECRET_KEY = "nRdyqVvX1CXKT0DPuKGxqRctNv5Q3Y0tGo82jYRbxofW5LkV03AcQ20"  # Replace with a secure key
+ALGORITHM = os.getenv("ALGORITHM")
 
-SECRET_KEY = "nRdyqVvX1CXKT0DPuKGxqRctNv5Q3Y0tGo82jYRbxofW5LkV03AcQ20"  # Replace with a secure key
-ALGORITHM = "HS256"
 
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(hours=1)):
     to_encode = data.copy()

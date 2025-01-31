@@ -3,6 +3,9 @@ from database import SessionLocal
 from app.api.v1.endpoints import user
 from app.api.v1.endpoints import reservation
 from app.api.v1.endpoints.auth import routes
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 app = FastAPI()
 
