@@ -153,7 +153,7 @@ async def update_person(
     db.commit()
     db.refresh(person)  # Refresh the instance to reflect the changes
 
-    return {"status": "success", "data": person}
+    return person
 
 
 @app.get("/{person_id}/reservations", response_model=list[schemas.Slot], status_code=status.HTTP_200_OK)

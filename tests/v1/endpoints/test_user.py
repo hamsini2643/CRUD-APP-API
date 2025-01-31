@@ -19,7 +19,23 @@ def test_db():
 # Test User Registration
 def test_get_by_userid(test_db):
     """Test getting a user by userid """
-    response = client.get("/api/v1/user/13")
+    response = client.get("/api/v1/user/16")
+    
+    print("------------------------>>>",response.json())  
+
+    assert response.status_code == 200
+
+def test_get_filter_by_firstname(test_db):
+    """Test getting a user by firstname """
+    response = client.get("/api/v1/user?firstname=jam")
+    
+    print("------------------------>>>",response.json())  
+
+    assert response.status_code == 200
+
+def test_get_filter_by_firstname(test_db):
+    """Test getting a user by firstname """
+    response = client.get("/api/v1/user?sort=asc&sort_by=firstname")
     
     print("------------------------>>>",response.json())  
 
@@ -57,5 +73,43 @@ def test_put_user(test_db):
     assert response_data["lastname"] == "ReddyUpdated"
     assert response_data["is_male"] is True
 
+def test_delete_by_user_id(test_db):
+    """Test getting a user by userid """
+    response = client.delete("/api/v1/user/14")
     
+    print("------------------------>>>",response.json())  
+
+    assert response.status_code == 200 
+
+def test_patch_user(test_db):
+    """Test updating a user by user ID"""
+
+    existing_user = test_db.query(Person).filter(Person.id == 13).first()
+    if not existing_user:
+        # Insert a test user if they don't exist
+        existing_user = Person(
+            id=13,
+            firstname="ankitha",
+            lastname="reddy",
+            is_male=True,
+            password_hash="anki123"  #  No need to hash manually
+        )
+        test_db.add(existing_user)
+        test_db.commit()  
+    updated_data = {
+        
+        "password_hash": "newpassword123"  
+    }
+    response = client.patch("/api/v1/user/13", json=updated_data)
+
+    print("--------------------------------->", response.json())  # Debugging   
+    assert response.status_code == 200
+    response_data = response.json()
+    assert response_data["id"] == 13
+    assert response_data["firstname"] == "AnkithaUpdated"
+    assert response_data["lastname"] == "ReddyUpdated"
+    assert response_data["is_male"] is True
+
+
+
 
