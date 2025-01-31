@@ -7,8 +7,10 @@ from sqlalchemy.ext.declarative import declarative_base
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
 
+
 # Retrieve the connection string
 DATABASE_CONNECTION_STRING = os.getenv("DATABASE_CONNECTION_STRING")
+print(f"Database Connection String: {DATABASE_CONNECTION_STRING}")
 
 
 #data = os.getenv(DATABASE_CONNECTION_STRING)

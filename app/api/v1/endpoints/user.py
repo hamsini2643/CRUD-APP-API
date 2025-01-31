@@ -1,52 +1,15 @@
 from fastapi import FastAPI, status, HTTPException, Depends
-from pydantic import BaseModel
+
 from database import get_db
 import app.models as models
+import schemas
 from typing import Optional
 from sqlalchemy.orm import Session
 from app.api.v1.endpoints.auth.hashing import hash_password, verify_password
 from fastapi import APIRouter
 
 app = APIRouter()
-
-
-class PersonCreate(BaseModel):
-    firstname: str
-    lastname: str
-    is_male: bool
-    password_hash: str
-
-
-class OurBaseModel(BaseModel):
-    class Config:
-        from_attributes = True  # Enables conversion of ORM models to Pydantic models
-
-
-class Person(OurBaseModel):
-    id: int
-    firstname: str
-    lastname: str
-    is_male: bool
-    #password_hash: str
-class Person_put(OurBaseModel):
-    id: int
-    firstname: str
-    lastname: str
-    is_male: bool
-    password_hash: str
-
-class SlotCreate(BaseModel):
-    start_time: str  # Expecting a string
-    end_time: str    # Expecting a string
-    person_id: int
-
-class Slot(OurBaseModel):
-    id: int
-    start_time: str
-    end_time: str
-    person_id: int
-
-@app.get("/", response_model=list[Person], status_code=status.HTTP_200_OK)
+@app.get("/", response_model=list[schemas.Person], status_code=status.HTTP_200_OK)
 async def get_persons(
     firstname: Optional[str] = None,
     lastname: Optional[str] = None,
@@ -95,7 +58,7 @@ async def get_persons(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/{id}", response_model=Person, status_code=status.HTTP_200_OK)    
+@app.get("/{id}", response_model=schemas.Person, status_code=status.HTTP_200_OK)    
 #print("this is id")
 def get_single_person(id: int, db: Session = Depends(get_db)):  # Use dependency injection
     try:
@@ -126,8 +89,8 @@ def add_person(person: PersonCreate, db: Session = Depends(get_db)):  # Use depe
         raise HTTPException(status_code=500, detail=str(e))'''
 
 
-@app.put("/{id}", response_model=Person, status_code=status.HTTP_202_ACCEPTED)
-def updatePerson(id: int, person: Person_put, db: Session = Depends(get_db)):  # Use dependency injection
+@app.put("/{id}", response_model=schemas.Person, status_code=status.HTTP_202_ACCEPTED)
+def updatePerson(id: int, person: schemas.Person_put, db: Session = Depends(get_db)):  # Use dependency injection
     find_person = db.query(models.Person).filter(models.Person.id == id).first()
     if find_person is not None:
         find_person.firstname = person.firstname
@@ -144,7 +107,7 @@ def updatePerson(id: int, person: Person_put, db: Session = Depends(get_db)):  #
     )
 
 
-@app.delete("/{id}", response_model=Person, status_code=status.HTTP_200_OK)
+@app.delete("/{id}", response_model=schemas.Person, status_code=status.HTTP_200_OK)
 def deletePerson(id: int, db: Session = Depends(get_db)):  # Use dependency injection
     find_person = db.query(models.Person).filter(models.Person.id == id).first()
     if find_person is not None:
@@ -159,7 +122,7 @@ def deletePerson(id: int, db: Session = Depends(get_db)):  # Use dependency inje
     )
 
 
-class UpdatePersonRequest(BaseModel):
+class UpdatePersonRequest(schemas.BaseModel):
     firstname: Optional[str] = None
     lastname: Optional[str] = None
     is_male: Optional[bool] = None
@@ -193,7 +156,7 @@ async def update_person(
     return {"status": "success", "data": person}
 
 
-@app.get("/{person_id}/reservations", response_model=list[Slot], status_code=status.HTTP_200_OK)
+@app.get("/{person_id}/reservations", response_model=list[schemas.Slot], status_code=status.HTTP_200_OK)
 async def get_reservations_by_user_id(
     person_id: int,
     db: Session = Depends(get_db)
@@ -214,7 +177,7 @@ async def get_reservations_by_user_id(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/{person_id}/reservations/{slot_id}", response_model=Slot, status_code=status.HTTP_200_OK)
+@app.get("/{person_id}/reservations/{slot_id}", response_model=schemas.Slot, status_code=status.HTTP_200_OK)
 async def get_single_reservation_for_user(
     person_id: int,
     slot_id: int,
