@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from app.models import Person
+from app.models import User
 from database import get_db
 from app.api.v1.endpoints.auth.hashing import hash_password, verify_password
 from app.api.v1.endpoints.auth.jwt_handler import create_access_token
@@ -11,7 +11,7 @@ router = APIRouter()
 class RegisterRequest(BaseModel):
     firstname: str
     lastname: str
-    is_male: bool
+    gender: str
     password: str
 
 class LoginRequest(BaseModel):
@@ -24,15 +24,15 @@ def login_info():
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 def register_user(request: RegisterRequest, db: Session = Depends(get_db)):
-    user = db.query(Person).filter(Person.firstname == request.firstname).first()
+    user = db.query(User).filter(User.firstname == request.firstname).first()
     if user:
         raise HTTPException(status_code=400, detail="User already exists")
 
     hashed_password = hash_password(request.password)
-    new_user = Person(
+    new_user = User(
         firstname=request.firstname,
         lastname=request.lastname,
-        is_male=request.is_male,
+        gender=request.gender,
         password_hash=hashed_password
     )
     db.add(new_user)
@@ -43,11 +43,11 @@ def register_user(request: RegisterRequest, db: Session = Depends(get_db)):
 @router.get("/register", response_model=dict)
 def register_info():
     # You could return some basic information here, like instructions for registering
-    return {"message": "Use the POST method to register by sending 'firstname', 'lastname', 'is_male', and 'password'."}
+    return {"message": "Use the POST method to register by sending 'firstname', 'lastname', 'gender', and 'password'."}
 
 @router.post("/login")
 def login_user(request: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(Person).filter(Person.firstname == request.firstname).first()
+    user = db.query(User).filter(User.firstname == request.firstname).first()
     if not user or not verify_password(request.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 

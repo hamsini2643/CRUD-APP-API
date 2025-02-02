@@ -32,7 +32,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 async def get_slots(
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
-    person_id: Optional[int] = None,
+    user_id: Optional[int] = None,
     sort: Optional[str] = None,
     sort_by: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -44,8 +44,8 @@ async def get_slots(
             query = query.filter(models.Slots.start_time == start_time)
         if end_time:
             query = query.filter(models.Slots.end_time == end_time)
-        if person_id:
-            query = query.filter(models.Slots.person_id == person_id)
+        if user_id:
+            query = query.filter(models.Slots.user_id == user_id)
 
         if sort and sort_by:
             sort_column = getattr(models.Slots, sort_by, None)
@@ -70,10 +70,10 @@ def add_slot(
     
 ):
     try:
-        user=db.query(models.Person).filter(models.Person.firstname==current_user).first()
+        user=db.query(models.User).filter(models.User.firstname==current_user).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        if slot.person_id!=user.id:
+        if slot.user_id!=user.id:
             raise HTTPException(status_code=403, detail="You are not authorized to add this slot")
         new_slot = models.Slots(
             start_time=slot.start_time,
@@ -86,7 +86,7 @@ def add_slot(
             id=new_slot.id,
             start_time=new_slot.start_time,
             end_time=new_slot.end_time,
-            person_id=user.id,
+            user_id=user.id,
         )
     except Exception as e:
         db.rollback()
@@ -99,15 +99,15 @@ def add_slot(
     
 ):
     try:
-        user=db.query(models.Person).filter(models.Person.firstname==current_user).first()
+        user=db.query(models.User).filter(models.User.firstname==current_user).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        if slot.person_id!=user.id:
+        if slot.user_id!=user.id:
             raise HTTPException(status_code=403, detail="You are not authorized to add this slot")
         new_slot = models.Slots(
             start_time=slot.start_time,
             end_time=slot.end_time,
-            person_id=user.id
+            user_id=user.id
         )
         db.add(new_slot)
         db.commit()
@@ -116,7 +116,7 @@ def add_slot(
             id=new_slot.id,
             start_time=new_slot.start_time,
             end_time=new_slot.end_time,
-            person_id=new_slot.person_id,
+            user_id=new_slot.user_id,
         )
     except Exception as e:
         db.rollback()
@@ -133,7 +133,7 @@ def update_slot(
     if existing_slot:
         existing_slot.start_time = slot.start_time
         existing_slot.end_time = slot.end_time
-        existing_slot.person_id = slot.person_id
+        existing_slot.user_id = slot.user_id
         db.commit()
         return existing_slot
     raise HTTPException(status_code=404, detail="Slot not found")

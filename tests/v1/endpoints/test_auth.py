@@ -4,7 +4,7 @@ from app.api.v1.endpoints.auth import routes
 from app.api.v1.endpoints.auth.hashing import hash_password, verify_password
 from app.api.v1.endpoints.auth.jwt_handler import create_access_token
 from database import get_db
-from app.models import Person
+from app.models import User
 import pytest
 client = TestClient(app)
 
@@ -19,14 +19,14 @@ def test_db():
 # Test User Registration
 def test_register_user(test_db):
     """Test registering a user """
-    test_db.query(Person).filter(Person.firstname == "jam").delete()
+    test_db.query(User).filter(User.firstname == "jam").delete()
     test_db.commit()
     password = "jam123"  # Plain password
     response = client.post("/api/v1/auth/register", json={
         "firstname": "jam",
         "lastname": "r",
         "password": password,  
-        "is_male": True  
+        "gender": "male"
     })
     print("------------------------>>>",response.json())  
 
@@ -34,7 +34,7 @@ def test_register_user(test_db):
     assert response.json() == {"message": "User registered successfully"}
 
     
-    user_in_db = test_db.query(Person).filter(Person.firstname == "jam").first()
+    user_in_db = test_db.query(User).filter(User.firstname == "jam").first()
     assert user_in_db is not None
     assert verify_password(password, user_in_db.password_hash)  
 
@@ -47,7 +47,7 @@ def test_login_user(test_db):
     hashed_password = hash_password(password)  # Hash password before saving
 
     # Manually insert a test user in the database
-    test_user = test_db.query(Person).filter(Person.firstname == "jam").first()
+    test_user = test_db.query(User).filter(User.firstname == "jam").first()
     assert test_user is not None
     
 
@@ -72,7 +72,7 @@ def test_login_user_wrong(test_db):
     hashed_password = hash_password(password)  # Hash password before saving
 
     # Manually insert a test user in the database
-    test_user = test_db.query(Person).filter(Person.firstname == "jam").first()
+    test_user = test_db.query(User).filter(User.firstname == "jam").first()
     assert test_user is not None
     
 

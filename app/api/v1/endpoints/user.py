@@ -9,11 +9,11 @@ from app.api.v1.endpoints.auth.hashing import hash_password, verify_password
 from fastapi import APIRouter
 
 app = APIRouter()
-@app.get("/", response_model=list[schemas.Person], status_code=status.HTTP_200_OK)
-async def get_persons(
+@app.get("/", response_model=list[schemas.User], status_code=status.HTTP_200_OK)
+async def get_users(
     firstname: Optional[str] = None,
     lastname: Optional[str] = None,
-    is_male: Optional[bool] = None,
+    gender: Optional[str] = None,
     sort: Optional[str] = None,
     sort_by: Optional[str] = None,
     min_id: Optional[int] = None,
@@ -23,21 +23,21 @@ async def get_persons(
 ):
     try:
         # Start with a base query
-        query = db.query(models.Person)
+        query = db.query(models.User)
         if get_all:
             result = query.all()
             return result
 
         # Apply filters based on optional parameters
         if firstname:
-            query = query.filter(models.Person.firstname.ilike(f"%{firstname}%"))
+            query = query.filter(models.User.firstname.ilike(f"%{firstname}%"))
         if lastname:
-            query = query.filter(models.Person.lastname.ilike(f"%{lastname}%"))
-        if is_male is not None:
-            query = query.filter(models.Person.is_male == is_male)
+            query = query.filter(models.User.lastname.ilike(f"%{lastname}%"))
+        if gender is not None:
+            query = query.filter(models.User.gender == gender)
 
         if sort and sort_by:
-            sort_column = getattr(models.Person, sort_by, None)
+            sort_column = getattr(models.User, sort_by, None)
             if not sort_column:
                 raise HTTPException(status_code=400, detail="Invalid sort_by field")
 
@@ -47,9 +47,9 @@ async def get_persons(
                 query = query.order_by(sort_column.desc())
 
         if min_id is not None:
-            query = query.filter(models.Person.id >= min_id)
+            query = query.filter(models.User.id >= min_id)
         if max_id is not None:
-            query = query.filter(models.Person.id <= max_id)
+            query = query.filter(models.User.id <= max_id)
 
         # Execute the query
         result = query.all()
@@ -58,145 +58,145 @@ async def get_persons(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/{id}", response_model=schemas.Person, status_code=status.HTTP_200_OK)    
+@app.get("/{id}", response_model=schemas.User, status_code=status.HTTP_200_OK)    
 #print("this is id")
-def get_single_person(id: int, db: Session = Depends(get_db)):  # Use dependency injection
+def get_single_user(id: int, db: Session = Depends(get_db)):  # Use dependency injection
     try:
         
-        get_single_person = db.query(models.Person).filter(models.Person.id == id).first()
-        if not get_single_person:
-            raise HTTPException(status_code=404, detail="Person not found")
-        return get_single_person
+        get_single_user = db.query(models.User).filter(models.User.id == id).first()
+        if not get_single_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return get_single_user
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-'''@app.post("/", response_model=Person, status_code=status.HTTP_201_CREATED)
-def add_person(person: PersonCreate, db: Session = Depends(get_db)):  # Use dependency injection
+'''@app.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
+def add_user(user: UserCreate, db: Session = Depends(get_db)):  # Use dependency injection
     try:
-        new_person = models.Person(
-            firstname=person.firstname,
-            lastname=person.lastname,
-            is_male=person.is_male,
+        new_user = models.User(
+            firstname=user.firstname,
+            lastname=user.lastname,
+            is_male=user.is_male,
             
         )
-        db.add(new_person)
+        db.add(new_user)
         db.commit()
-        db.refresh(new_person)  # Retrieve the auto-generated ID
-        return new_person
+        db.refresh(new_user)  # Retrieve the auto-generated ID
+        return new_user
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))'''
 
 
-@app.put("/{id}", response_model=schemas.Person, status_code=status.HTTP_202_ACCEPTED)
-def updatePerson(id: int, person: schemas.Person_put, db: Session = Depends(get_db)):  # Use dependency injection
-    find_person = db.query(models.Person).filter(models.Person.id == id).first()
-    if find_person is not None:
-        find_person.firstname = person.firstname
-        find_person.lastname = person.lastname
-        find_person.is_male = person.is_male
-        #find_person.password_hash = person.password_hash
-        if person.password_hash:
-            hashed_password = hash_password(person.password_hash)  # Hash the new password
-            find_person.password_hash = hashed_password
+@app.put("/{id}", response_model=schemas.User, status_code=status.HTTP_202_ACCEPTED)
+def updateUser(id: int, user: schemas.User_put, db: Session = Depends(get_db)):  # Use dependency injection
+    find_user = db.query(models.User).filter(models.User.id == id).first()
+    if find_user is not None:
+        find_user.firstname = user.firstname
+        find_user.lastname = user.lastname
+        find_user.gender = user.gender
+        #find_user.password_hash = user.password_hash
+        if user.password_hash:
+            hashed_password = hash_password(user.password_hash)  # Hash the new password
+            find_user.password_hash = hashed_password
         db.commit()
-        return find_person
+        return find_user
     raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Person with this id not found"
+        status_code=status.HTTP_404_NOT_FOUND, detail="User with this id not found"
     )
 
 
-@app.delete("/{id}", response_model=schemas.Person, status_code=status.HTTP_200_OK)
-def deletePerson(id: int, db: Session = Depends(get_db)):  # Use dependency injection
-    find_person = db.query(models.Person).filter(models.Person.id == id).first()
-    if find_person is not None:
-        db.delete(find_person)
+@app.delete("/{id}", response_model=schemas.User, status_code=status.HTTP_200_OK)
+def deleteUser(id: int, db: Session = Depends(get_db)):  # Use dependency injection
+    find_user = db.query(models.User).filter(models.User.id == id).first()
+    if find_user is not None:
+        db.delete(find_user)
         db.commit()
         raise HTTPException(
-            status_code=status.HTTP_200_OK, detail="Person deleted successfully"
+            status_code=status.HTTP_200_OK, detail="User deleted successfully"
         )
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail="Person with this id is either already deleted or not found",
+        detail="User with this id is either already deleted or not found",
     )
 
 
-class UpdatePersonRequest(schemas.BaseModel):
+class UpdateUserRequest(schemas.BaseModel):
     firstname: Optional[str] = None
     lastname: Optional[str] = None
-    is_male: Optional[bool] = None
+    gender: Optional[str] = None
 
 
 @app.patch("/{id}")
-async def update_person(
+async def update_user(
     id: int,
-    person_data: UpdatePersonRequest,
+    user_data: UpdateUserRequest,
     db: Session = Depends(get_db),  # Use dependency injection
 ):
-    # Fetch the person by ID
-    person = db.query(models.Person).filter(models.Person.id == id).first()
+    # Fetch the user by ID
+    user = db.query(models.User).filter(models.User.id == id).first()
 
-    # Check if the person exists
-    if not person:
-        raise HTTPException(status_code=404, detail="Person not found")
+    # Check if the user exists
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
     # Update fields if provided in the request
-    if person_data.firstname is not None:
-        person.firstname = person_data.firstname
-    if person_data.lastname is not None:
-        person.lastname = person_data.lastname
-    if person_data.is_male is not None:
-        person.is_male = person_data.is_male
+    if user_data.firstname is not None:
+        user.firstname = user_data.firstname
+    if user_data.lastname is not None:
+        user.lastname = user_data.lastname
+    if user_data.gender is not None:
+        user.gender = user_data.gender
 
     # Commit the changes to the database
     db.commit()
-    db.refresh(person)  # Refresh the instance to reflect the changes
+    db.refresh(user)  # Refresh the instance to reflect the changes
 
-    return person
+    return user
 
 
-@app.get("/{person_id}/reservations", response_model=list[schemas.Slot], status_code=status.HTTP_200_OK)
+@app.get("/{user_id}/reservations", response_model=list[schemas.Slot], status_code=status.HTTP_200_OK)
 async def get_reservations_by_user_id(
-    person_id: int,
+    user_id: int,
     db: Session = Depends(get_db)
 ):
     """
-    Fetch all reservations for a specific user by their person_id.
+    Fetch all reservations for a specific user by their user_id.
     """
     try:
-        reservations = db.query(models.Slots).filter(models.Slots.person_id == person_id).all()
+        reservations = db.query(models.Slots).filter(models.Slots.user_id == user_id).all()
 
         if not reservations:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No reservations found for user with ID {person_id}"
+                detail=f"No reservations found for user with ID {user_id}"
             )
 
         return reservations
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/{person_id}/reservations/{slot_id}", response_model=schemas.Slot, status_code=status.HTTP_200_OK)
+@app.get("/{user_id}/reservations/{slot_id}", response_model=schemas.Slot, status_code=status.HTTP_200_OK)
 async def get_single_reservation_for_user(
-    person_id: int,
+    user_id: int,
     slot_id: int,
     db: Session = Depends(get_db)
 ):
     """
-    Fetch a single reservation for a specific user by person_id and slot_id.
+    Fetch a single reservation for a specific user by user_id and slot_id.
     """
     try:
         reservation = (
             db.query(models.Slots)
-            .filter(models.Slots.person_id == person_id, models.Slots.id == slot_id)
+            .filter(models.Slots.user_id == user_id, models.Slots.id == slot_id)
             .first()
         )
 
         if not reservation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Reservation with ID {slot_id} not found for user with ID {person_id}"
+                detail=f"Reservation with ID {slot_id} not found for user with ID {user_id}"
             )
 
         return reservation
