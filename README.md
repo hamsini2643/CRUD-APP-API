@@ -72,4 +72,21 @@ alembic upgrade head
 ```
 
 --- 
+## Running with Docker (Optional)
 
+1. Build the Docker image:
+    
+    ```
+    docker build -t fastapi-app .
+    ```
+    
+2. Run the container:
+    
+    ```
+     docker run -d --name fastapi-container-1 -p 8000:8000 fastapi-app
+    ```
+    ```
+    docker exec 5c1b1a2015ddcc6d9958933e36c728bad34f6700e920ba8aa6fb1e69f822807e /bin/sh
+    ```
+
+    
